@@ -19,10 +19,10 @@ Projeto de estudo em C# e .NET voltado para o aprendizado prático de integridad
 
 - [x] **Módulo 1: Fundação & Parsing Defensivo**  
   Tratamento estrito de tipos primitivos e prevenção de falhas de runtime (`TryParse`, sentinelas).
-- [ ] **Módulo 2: Fluxo & Validação Contínua**  
-  Interface CLI resiliente e validação iterativa de entradas de dados.
-- [ ] **Módulo 3: Modelagem de Domínio**  
-  Entidades (`Paciente`, `Consulta`, `Especialidade`), Enums e encapsulamento.
+- [x] **Módulo 2: Fluxo, Decisão & Ciclo Contínuo**  
+  Interface CLI navegável (`switch`), regras de negócio condicionais (`if/else`) e execução contínua da aplicação (`while`).
+- [ ] **Módulo 3: Modelagem de Domínio & Métodos**  
+  Modularização, entidades (`Paciente`, `Consulta`, `Especialidade`), Enums e encapsulamento.
 - [ ] **Módulo 4: Manipulação de Dados & LINQ**  
   Coleções em memória, consultas com LINQ e serialização em JSON.
 - [ ] **Módulo 5: Suíte de Testes Unitários**  

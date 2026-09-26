@@ -9,6 +9,30 @@ public class Paciente
     public string Telefone {get;set;} = string.Empty;
     public int Idade => CalcularIdade(DataNascimento);
 
+    public Paciente(string nome, DateTime dataNascimento, string convenio = "Particular", string telefone = "")
+    {
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            throw new ArgumentException("O nome do paciente é de preenchimento obrigatório");
+        }
+
+        if (dataNascimento.Date > DateTime.Today)
+        {
+            throw new ArgumentException("A data é inválida, pois é maior que a data atual");
+        }
+
+        if (dataNascimento.Year < 1900)
+        {
+            throw new ArgumentException("A data é inválida");
+        }
+
+        Nome = nome;
+        DataNascimento = dataNascimento;
+        Convenio = convenio;
+        Telefone = telefone;
+        DataNascimentoValida = true;
+    }
+
     private static int CalcularIdade(DateTime DataNascimento)
     {
         var hoje = DateTime.Today;

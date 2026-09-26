@@ -8,6 +8,7 @@ public class Paciente
     public bool DataNascimentoValida {get;set;} = false;
     public string Telefone {get;set;} = string.Empty;
     public int Idade => CalcularIdade(DataNascimento);
+    public string MensagemAcompanhante => ObterMensagemAcompanhante();
 
     public Paciente(string nome, DateTime dataNascimento, string convenio = "Particular", string telefone = "")
     {
@@ -33,7 +34,7 @@ public class Paciente
         DataNascimentoValida = true;
     }
 
-    private static int CalcularIdade(DateTime DataNascimento)
+    public static int CalcularIdade(DateTime DataNascimento)
     {
         var hoje = DateTime.Today;
         var idade = hoje.Year - DataNascimento.Year;
@@ -43,5 +44,21 @@ public class Paciente
             idade--;
         }
         return idade < 0 ? -1 : idade;
+    }
+
+    private string ObterMensagemAcompanhante()
+    {
+        if (Idade < 12)
+        {
+            return "Paciente infantil: obrigatório acompanhante.\nEntregar kit de desenho na recepção";
+        }
+        else if (Idade >= 60)
+        {
+            return "Paciente idoso: obrigatório acompanhante";
+        }
+        else
+        {
+            return "Paciente liberado para aguardar na recepção";
+        }
     }
 }

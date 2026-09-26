@@ -9,12 +9,12 @@ public class Paciente
     public string Telefone {get;set;} = string.Empty;
     public int Idade => CalcularIdade(DataNascimento);
 
-    private static int CalcularIdade(DateTime dataNascimento)
+    private static int CalcularIdade(DateTime DataNascimento)
     {
         var hoje = DateTime.Today;
-        var idade = hoje.Year - dataNascimento.Year;
+        var idade = hoje.Year - DataNascimento.Year;
 
-        if (dataNascimento.Date > hoje.AddYears(-idade))
+        if (DataNascimento.Date > hoje.AddYears(-idade))
         {
             idade--;
         }

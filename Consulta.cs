@@ -8,6 +8,7 @@ public class Consulta
     public int Duracao { get; set; } = 45;
     public decimal Valor { get; set; }
     public decimal ValorFinal { get; set; }
+    public StatusConsulta Status {get; set;} = StatusConsulta.Agendada;
 
     public Consulta(Paciente paciente)
     {

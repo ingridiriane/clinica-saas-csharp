@@ -1,3 +1,5 @@
+using ClinicaSaaS;
+
 bool executando = true;
 
 while (executando)
@@ -59,130 +61,98 @@ static void Limpeza()
 
 static void ProcessarNovoAtendimento()
 {
-    // Dados do Paciente
+    //PACIENTE
+    Console.WriteLine("Digite o nome do paciente: ");
+    string nome = Console.ReadLine() ?? "";
 
-    Console.Write("Digite o nome do paciente: ");
-    string? entradaNome = Console.ReadLine();
-    string nomePaciente = string.IsNullOrWhiteSpace(entradaNome)
-                ? "Não informado" : entradaNome;
-
-    Console.Write("Digite a data de nascimento do paciente: ");
-    string? entradaDataNascimento = Console.ReadLine();
-    DateTime dataNascimentoPaciente = DateTime.TryParse(entradaDataNascimento, out DateTime dataNascimentoConvertida)
-                ? dataNascimentoConvertida.Date
-                : new(2500, 1, 1);
-
-    bool dataNascimentoValida = dataNascimentoPaciente.Year != 2500;
-
-    int idadePaciente = dataNascimentoValida
-                ? CalcularIdade(dataNascimentoPaciente)
-                : 0;
-
-    Console.Write("Digite o convênio do paciente (Se não houver, tecle Enter): ");
-    string? entradaConvenio = Console.ReadLine();
-    bool possuiConvenio = !string.IsNullOrWhiteSpace(entradaConvenio);
-    string nomeConvenio = possuiConvenio
-                ? entradaConvenio!
-                : "Particular";
-
-    // Dados da Consulta
-
-    Console.Write("Digite o valor da consulta: ");
-    string? entradaValor = Console.ReadLine();
-    decimal valorConsulta = decimal.TryParse(entradaValor, out decimal valorConvertido)
-                    ? valorConvertido
-                    : -1.00m;
-
-    DateTime dataHoraConsulta = new(2026, 10, 15, 14, 0, 0);
-    TimeSpan duracaoConsulta = TimeSpan.FromMinutes(45);
-    DateTime dataHoraTermino = dataHoraConsulta.Add(duracaoConsulta);
-
-    string mensagemAcompanhante = ObterMensagemAcompanhante(idadePaciente, dataNascimentoValida);
-
-    valorConsulta = CalcularValorConsulta(valorConsulta, idadePaciente, dataNascimentoValida);
-    string opcoesDesconto = ObterMensagemDesconto(idadePaciente, dataNascimentoValida);
-
-    string opcoesValor = valorConsulta switch
+    try
     {
-        < 0 => "Não informado",
-        0.00m => "Gratuito",
-        _ => valorConsulta.ToString("C")
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new ArgumentException("O nome é de preenchimento obrigatório");
+    }
+    catch (ArgumentException ex)
+    {
+        Console.WriteLine($"Erro de cadastro: {ex.Message}");
+        return;
+    }
+
+    Console.WriteLine("Digite a data de nascimento do paciente (dd/mm/aaaa): ");
+    if (!DateTime.TryParse(Console.ReadLine(), out DateTime dataNascimento))
+    {
+        Console.WriteLine("Data em formato inválido");
+        return;
+    }
+
+    Console.WriteLine("Digite o convênio do paciente (Aperte Enter se for particular): ");
+    string? convenioInput = Console.ReadLine();
+    string convenio = string.IsNullOrWhiteSpace(convenioInput) ? "Particular" : convenioInput;
+
+    Console.WriteLine("Digite o número do paciente (opcional): ");
+    string? telefone = Console.ReadLine() ?? "";
+
+    Paciente paciente;
+    try
+    {
+        paciente = new Paciente(nome, dataNascimento, convenio, telefone);
+    }
+    catch (ArgumentException ex)
+    {
+        Console.WriteLine($"Erro ao cadastrar paciente: {ex.Message}");
+        return;
+        
+    }
+
+    //CONSULTA
+    Console.WriteLine("Digite a duração da consulta: ");
+    string durancaoInput = Console.ReadLine() ?? "0";
+    int duracao = int.TryParse(durancaoInput, out int minutos)
+        ? minutos
+        : 0;
+
+    Console.WriteLine("Digite o valor da consulta: ");
+    if (!decimal.TryParse(Console.ReadLine(), out decimal valor))
+    {
+        Console.WriteLine("Valor informado não é válido.");
+        return;
+    }
+
+    StatusConsulta status = LerStatusConsulta();
+
+    Consulta consulta = new Consulta(paciente)
+    {
+        Duracao = duracao,
+        Valor = valor,
+        Status = status
     };
 
-    Console.WriteLine("\n\n=== Novo Atendimento ===");
-    Console.WriteLine($"Paciente: {nomePaciente}");
-    Console.WriteLine($"Idade do Paciente: {(dataNascimentoValida ? $"{idadePaciente} anos" : "Não informado")}");
-    Console.WriteLine($"Convênio: {nomeConvenio}");
-    Console.WriteLine($"Valor da Consulta: {opcoesValor}");
-    Console.WriteLine($"Data do Atendimento: {dataHoraConsulta:dd/MM/yyyy}");
-    Console.WriteLine($"Horário: das {dataHoraConsulta:HH:mm} às {dataHoraTermino:HH:mm} ({duracaoConsulta.TotalMinutes} min)");
-    Console.WriteLine("\n=== Informações para o paciente ===");
-    Console.WriteLine(mensagemAcompanhante);
-    Console.WriteLine($"{opcoesDesconto}");
+    //EXIBIR RESULTADO DOS INPUTS
+    Console.WriteLine("=== NOVO ATENDIMENTO ===");
+    Console.WriteLine($"Paciente: {consulta.Paciente.Nome}");
+    Console.WriteLine($"Idade: {consulta.Paciente.Idade}");
+    Console.WriteLine($"Convênio: {consulta.Paciente.Convenio}");
+    Console.WriteLine($"Telefone: {consulta.Paciente.Telefone ?? "Não informado"}");
+    Console.WriteLine($"Horário: das {consulta.DataHora:HH:mm} às {consulta.DataHoraTermino:HH:mm}");
+    Console.WriteLine($"Valor: {consulta.Valor:C}");
+    Console.WriteLine($"Status: {consulta.Status}");
+    Console.WriteLine("\n=== INFORMAÇÕES ===");
+    Console.WriteLine(consulta.Paciente.MensagemAcompanhante);
+    Console.WriteLine(consulta.MensagemDesconto);
+    
 }
 
-static int CalcularIdade(DateTime dataNascimento)
+static StatusConsulta LerStatusConsulta()
 {
-    DateTime dataAtual = DateTime.Today;
-    int idade = dataAtual.Year - dataNascimento.Year;
+    Console.WriteLine("1 - Agendada\n2 - Confirmada\n3 - Em Atendimentoo\n4 - Concluída\n5 - Cancelada\nEscolha o estado da Consulta: ");
+    string? status = Console.ReadLine();
 
-    if (dataAtual.DayOfYear < dataNascimento.DayOfYear)
+    return status switch
     {
-        idade--;
-    }
+        "1" => StatusConsulta.Agendada,
+        "2" => StatusConsulta.Confirmada,
+        "3" => StatusConsulta.EmAtendimento,
+        "4" => StatusConsulta.Concluida,
+        "5" => StatusConsulta.Cancelada,
+        _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
-    return idade;
-}
-
-static string ObterMensagemAcompanhante(int idade, bool dataValida)
-{
-    if (!dataValida)
-    {
-        return "Entrada inválida";
-    }
-
-    if (idade < 12)
-    {
-         return "Paciente infantil: obrigatório acompanhante\nEntregar kit de desenho na recepção";
-    }
-
-    return "Paciente liberado para aguardar sozinho";
-}
-
-static decimal CalcularValorConsulta(decimal valorOriginal, int idade, bool dataValida)
-{
-    if (!dataValida || valorOriginal < 0)
-    {
-        return valorOriginal;
-    }
-    else if (idade < 5)
-    {
-        return 0.0m;
-    }
-    else if (idade >= 60)
-    {
-        return valorOriginal *  0.8m;
-    }
-
-    return valorOriginal;
-}
-
-static string ObterMensagemDesconto(int idade, bool dataValida)
-{
-    if (!dataValida)
-    {
-        return "Desconto não aplicável";
-    }
-
-    if (idade < 5)
-    {
-        return "Desconto de pediatria social: 100,0%";
-    }
-
-    if (idade >= 60)
-    {
-        return "Desconto para paciente idoso: 20,0%";
-    }
-
-    return "Desconto não aplicável";
+    };
 }

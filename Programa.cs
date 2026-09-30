@@ -1,5 +1,7 @@
 using ClinicaSaaS;
 
+List<Consulta> listaConsultas = [];
+
 bool executando = true;
 
 while (executando)
@@ -9,7 +11,7 @@ while (executando)
     switch (opcaoMenu)
     {
         case "1":
-            ProcessarNovoAtendimento();
+            ProcessarNovoAtendimento(listaConsultas);
             Limpeza();
 
             break;
@@ -59,7 +61,7 @@ static void Limpeza()
     Console.Clear();
 }
 
-static void ProcessarNovoAtendimento()
+static void ProcessarNovoAtendimento(List<Consulta> listaConsultas)
 {
     //PACIENTE
     Console.WriteLine("Digite o nome do paciente: ");
@@ -125,6 +127,8 @@ static void ProcessarNovoAtendimento()
         Status = status
     };
 
+    listaConsultas.Add(consulta);
+
     //EXIBIR RESULTADO DOS INPUTS
     Console.WriteLine("=== NOVO ATENDIMENTO ===");
     Console.WriteLine($"Paciente: {consulta.Paciente.Nome}");
@@ -132,11 +136,12 @@ static void ProcessarNovoAtendimento()
     Console.WriteLine($"Convênio: {consulta.Paciente.Convenio}");
     Console.WriteLine($"Telefone: {consulta.Paciente.Telefone ?? "Não informado"}");
     Console.WriteLine($"Horário: das {consulta.DataHora:HH:mm} às {consulta.DataHoraTermino:HH:mm}");
-    Console.WriteLine($"Valor: {consulta.Valor:C}");
+    Console.WriteLine($"Valor: {consulta.ValorFinal:C}");
     Console.WriteLine($"Status: {consulta.Status}");
     Console.WriteLine("\n=== INFORMAÇÕES ===");
     Console.WriteLine(consulta.Paciente.MensagemAcompanhante);
     Console.WriteLine(consulta.MensagemDesconto);
+    Console.WriteLine($"Consultas realizadas durante a sessão: {listaConsultas.Count}");
     
 }
 
@@ -155,4 +160,6 @@ static StatusConsulta LerStatusConsulta()
         _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
     };
+
+    
 }

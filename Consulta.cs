@@ -36,7 +36,7 @@ public class Consulta(Paciente paciente)
         }
         else if (Paciente.Idade >= 60)
         {
-            return Valor * (1 - Desconto);
+            return Valor * (1m - Desconto);
         }
         else
         {

@@ -16,7 +16,7 @@ public class Consulta(Paciente paciente)
     {
         if (Paciente.Idade < 5)
         {
-            return 1.0m;
+            return 0m;
         }
         else if (Paciente.Idade >= 60)
         {
@@ -48,7 +48,7 @@ public class Consulta(Paciente paciente)
     {
         if (Paciente.Idade < 5)
         {
-            return $"Pediatria social: {Desconto:P0} de desconto";
+            return $"Pediatria social: {Desconto * 100m:P0} de desconto";
         }
         else if (Paciente.Idade >= 60)
         {

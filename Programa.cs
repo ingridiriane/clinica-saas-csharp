@@ -1,5 +1,8 @@
 using ClinicaSaaS;
 
+List<Consulta> listaConsultas = [];
+List<Paciente> listaPacientes = [];
+
 bool executando = true;
 
 while (executando)
@@ -9,27 +12,33 @@ while (executando)
     switch (opcaoMenu)
     {
         case "1":
-            ProcessarNovoAtendimento();
+            ProcessarNovaConsulta(listaConsultas, listaPacientes);
             Limpeza();
-
             break;
 
         case "2":
+            ProcessarNovoPaciente(listaPacientes);
+            Limpeza();
+            break;
+
+        case "3":
+            ProcessarBusca(listaPacientes, listaConsultas);
+            Limpeza();
+            break;
+
+        case "4":
             ExibirInformacoesClinica();
             Limpeza();
-
             break;
 
         case "0":
             Console.WriteLine("Sistema encerrado pelo operador.");
             executando = false;
-
             break;
 
         default:
             Console.WriteLine("Opção inválida");
             Limpeza();
-
             break;
     }
 
@@ -45,7 +54,7 @@ static void ExibirInformacoesClinica()
 static string? ExibirMenuInicial()
 {
     Console.WriteLine("=== SISTEMA CLÍNICA SAAS ===");
-    Console.WriteLine("1 - Novo Atendimento\n2 - Informações da Clínica\n0 - Sair");
+    Console.WriteLine("1 - Nova Consulta\n2 - Novo Paciente\n3 - Busca\n4 - Informações da Clínica\n0 - Sair");
 
     Console.Write("Escolha uma opção: ");
     return Console.ReadLine();
@@ -59,7 +68,7 @@ static void Limpeza()
     Console.Clear();
 }
 
-static void ProcessarNovoAtendimento()
+static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
 {
     //PACIENTE
     Console.WriteLine("Digite o nome do paciente: ");
@@ -90,59 +99,191 @@ static void ProcessarNovoAtendimento()
     Console.WriteLine("Digite o número do paciente (opcional): ");
     string? telefone = Console.ReadLine() ?? "";
 
-    Paciente paciente;
-    try
+    Console.WriteLine($"Deseja cadastrar paciente {nome}? (S/N): ");
+    string resposta = Console.ReadLine() ?? "";
+
+    switch (resposta)
     {
-        paciente = new Paciente(nome, dataNascimento, convenio, telefone);
-    }
-    catch (ArgumentException ex)
-    {
-        Console.WriteLine($"Erro ao cadastrar paciente: {ex.Message}");
-        return;
-        
+        case "S":
+            Paciente paciente;
+            try
+            {
+                paciente = new Paciente(nome, dataNascimento, convenio, telefone);
+                listaPacientes.Add(paciente);
+
+                Console.Clear();
+
+                Console.WriteLine($"Paciente {paciente.Nome} cadastrado com sucesso!");
+                Console.WriteLine($"Total de pacientes cadastrados: {listaPacientes.Count}");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"Erro ao cadastrar paciente: {ex.Message}");
+                return;
+
+            }
+            break;
+        case "N":
+            Console.Clear();
+            Console.WriteLine("Paciente não cadastrado");
+            break;
+        default:
+            Console.Clear();
+            Console.WriteLine("Entrada inválida");
+            break;
+
     }
 
+
+}
+
+static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes)
+{
     //CONSULTA
-    Console.WriteLine("Digite a duração da consulta: ");
-    string durancaoInput = Console.ReadLine() ?? "0";
-    int duracao = int.TryParse(durancaoInput, out int minutos)
-        ? minutos
-        : 0;
 
-    Console.WriteLine("Digite o valor da consulta: ");
-    if (!decimal.TryParse(Console.ReadLine(), out decimal valor))
+    if (listaPacientes.Count == 0)
     {
-        Console.WriteLine("Valor informado não é válido.");
+        Console.WriteLine("Nenhum paciente cadastrado. Cadastre um paciente primeiro antes de registrar uma consulta.");
         return;
     }
 
-    StatusConsulta status = LerStatusConsulta();
+    Console.WriteLine("Digite o nome do paciente que irá registrar consulta: ");
+    string busca = Console.ReadLine() ?? "";
 
-    Consulta consulta = new Consulta(paciente)
+    if (string.IsNullOrWhiteSpace(busca))
     {
-        Duracao = duracao,
-        Valor = valor,
-        Status = status
-    };
+        Console.WriteLine("Entrada inválida. Digite um nome para buscar.");
+        Limpeza();
+        return;
+    }
 
-    //EXIBIR RESULTADO DOS INPUTS
-    Console.WriteLine("=== NOVO ATENDIMENTO ===");
-    Console.WriteLine($"Paciente: {consulta.Paciente.Nome}");
-    Console.WriteLine($"Idade: {consulta.Paciente.Idade}");
-    Console.WriteLine($"Convênio: {consulta.Paciente.Convenio}");
-    Console.WriteLine($"Telefone: {consulta.Paciente.Telefone ?? "Não informado"}");
-    Console.WriteLine($"Horário: das {consulta.DataHora:HH:mm} às {consulta.DataHoraTermino:HH:mm}");
-    Console.WriteLine($"Valor: {consulta.Valor:C}");
-    Console.WriteLine($"Status: {consulta.Status}");
-    Console.WriteLine("\n=== INFORMAÇÕES ===");
-    Console.WriteLine(consulta.Paciente.MensagemAcompanhante);
-    Console.WriteLine(consulta.MensagemDesconto);
-    
+    Paciente? pacienteEncontrado = listaPacientes
+        .FirstOrDefault(p => p.Nome.Contains(busca, StringComparison.OrdinalIgnoreCase));
+
+    if (pacienteEncontrado == null)
+    {
+        Console.WriteLine($"Nenhum paciente encontrado com o termo {busca}");
+        return;
+    }
+
+    Console.WriteLine($"Paciente Selecionado: {pacienteEncontrado.Nome}");
+    Console.WriteLine("É o paciente correto? (S/N)");
+    string resposta = Console.ReadLine() ?? "";
+
+    if (resposta == "S")
+    {
+        Console.WriteLine("Digite a duração da consulta: ");
+        string durancaoInput = Console.ReadLine() ?? "0";
+        int duracao = int.TryParse(durancaoInput, out int minutos)
+            ? minutos
+            : 0;
+
+        Console.WriteLine("Digite o valor da consulta: ");
+        if (!decimal.TryParse(Console.ReadLine(), out decimal valor))
+        {
+            Console.WriteLine("Valor informado não é válido.");
+            return;
+        }
+
+        StatusConsulta status = LerStatusConsulta();
+
+        Consulta consulta = new(pacienteEncontrado)
+        {
+            Duracao = duracao,
+            Valor = valor,
+            Status = status
+        };
+
+        listaConsultas.Add(consulta);
+
+        //EXIBIR RESULTADO DOS INPUTS
+        Console.WriteLine("=== NOVO ATENDIMENTO ===");
+        Console.WriteLine($"Paciente: {consulta.Paciente.Nome}");
+        Console.WriteLine($"Idade: {consulta.Paciente.Idade}");
+        Console.WriteLine($"Convênio: {consulta.Paciente.Convenio}");
+        Console.WriteLine($"Telefone: {consulta.Paciente.Telefone ?? "Não informado"}");
+        Console.WriteLine($"Horário: das {consulta.DataHora:HH:mm} às {consulta.DataHoraTermino:HH:mm}");
+        Console.WriteLine($"Valor: {consulta.ValorFinal:C}");
+        Console.WriteLine($"Status: {consulta.Status}");
+        Console.WriteLine("\n=== INFORMAÇÕES ===");
+        Console.WriteLine(consulta.Paciente.MensagemAcompanhante);
+        Console.WriteLine(consulta.MensagemDesconto);
+        Console.WriteLine($"Consultas realizadas durante a sessão: {listaConsultas.Count}");
+
+    }
+    else if (resposta == "N")
+    {
+        return;
+    }
+    else
+    {
+        Console.WriteLine("Entrada inválida");
+        return;
+    }
+
+}
+
+static void ProcessarBusca(List<Paciente> listaPacientes, List<Consulta> listaConsultas)
+{
+    Console.WriteLine("=== CONSULTAS E RELATÓRIOS ===");
+    Console.WriteLine("1 - Listar todos os pacientes\n2 - Filtrar consultas por status\nEscolha uma opção: ");
+    string? opcao = Console.ReadLine();
+
+    switch (opcao)
+    {
+        case "1":
+
+            if (listaPacientes.Count == 0)
+            {
+                Console.WriteLine("Nenhum paciente cadastrado");
+                return;
+            }
+
+            List<Paciente> pacientesOrdenados = [.. listaPacientes.OrderBy(p => p.Nome)];
+
+            Console.WriteLine($"Pacientes cadastrados ({pacientesOrdenados.Count})");
+            foreach (Paciente p in pacientesOrdenados)
+            {
+                Console.WriteLine($"Nome {p.Nome} | Idade: {p.Idade} | Convênio: {p.Convenio} | Telefone: {p.Telefone}");
+            }
+            break;
+
+        case "2":
+
+            if (listaConsultas.Count == 0)
+            {
+                Console.WriteLine("Nenhuma consulta cadastrada");
+                return;
+            }
+
+            StatusConsulta status = LerStatusConsulta();
+
+            List<Consulta> consultasFiltradas = [.. listaConsultas.Where(c => c.Status == status)];
+
+            Console.WriteLine($"Consultas Filtradas com status {status} ({consultasFiltradas.Count})");
+
+            if (consultasFiltradas.Count == 0)
+            {
+                Console.WriteLine($"Nenhuma consulta encontrada com o status {status}");
+                return;
+            }
+
+            foreach (Consulta c in consultasFiltradas)
+            {
+                Console.WriteLine($"Paciente: {c.Paciente.Nome} | Horário: {c.DataHora:HH:mm} | Valor: {c.ValorFinal:C}");
+            }
+            break;
+
+        default:
+            Console.WriteLine("Entrada inválida");
+             break;
+    }
+
 }
 
 static StatusConsulta LerStatusConsulta()
 {
-    Console.WriteLine("1 - Agendada\n2 - Confirmada\n3 - Em Atendimentoo\n4 - Concluída\n5 - Cancelada\nEscolha o estado da Consulta: ");
+    Console.WriteLine("1 - Agendada\n2 - Confirmada\n3 - Em Atendimento\n4 - Concluída\n5 - Cancelada\nEscolha o estado da Consulta: ");
     string? status = Console.ReadLine();
 
     return status switch
@@ -155,4 +296,6 @@ static StatusConsulta LerStatusConsulta()
         _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
     };
+
+
 }

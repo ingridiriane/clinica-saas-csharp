@@ -1,7 +1,10 @@
 using ClinicaSaaS;
 
-List<Consulta> listaConsultas = [];
-List<Paciente> listaPacientes = [];
+RepositorioPaciente repoPaciente = new("pacientes.csv");
+RepositorioConsulta repoConsulta = new("consultas.csv");
+
+List<Paciente> listaPacientes = repoPaciente.CarregarPacientes();
+List<Consulta> listaConsultas = repoConsulta.CarregarConsultas(listaPacientes);
 
 bool executando = true;
 
@@ -12,12 +15,12 @@ while (executando)
     switch (opcaoMenu)
     {
         case "1":
-            ProcessarNovaConsulta(listaConsultas, listaPacientes);
+            ProcessarNovaConsulta(listaConsultas, listaPacientes, repoConsulta);
             Limpeza();
             break;
 
         case "2":
-            ProcessarNovoPaciente(listaPacientes);
+            ProcessarNovoPaciente(listaPacientes, repoPaciente);
             Limpeza();
             break;
 
@@ -68,7 +71,7 @@ static void Limpeza()
     Console.Clear();
 }
 
-static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
+static void ProcessarNovoPaciente(List<Paciente> listaPacientes, RepositorioPaciente repoPaciente)
 {
     //PACIENTE
     Console.WriteLine("Digite o nome do paciente: ");
@@ -111,6 +114,8 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
                 paciente = new Paciente(nome, dataNascimento, convenio, telefone);
                 listaPacientes.Add(paciente);
 
+                repoPaciente.SalvarPacientes(listaPacientes);
+
                 Console.Clear();
 
                 Console.WriteLine($"Paciente {paciente.Nome} cadastrado com sucesso!");
@@ -131,13 +136,10 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
             Console.Clear();
             Console.WriteLine("Entrada inválida");
             break;
-
     }
-
-
 }
 
-static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes)
+static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes, RepositorioConsulta repoConsulta)
 {
     //CONSULTA
 
@@ -196,6 +198,8 @@ static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> 
 
         listaConsultas.Add(consulta);
 
+        repoConsulta.SalvarConsultas(listaConsultas);
+
         //EXIBIR RESULTADO DOS INPUTS
         Console.WriteLine("=== NOVO ATENDIMENTO ===");
         Console.WriteLine($"Paciente: {consulta.Paciente.Nome}");
@@ -226,7 +230,7 @@ static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> 
 static void ProcessarBusca(List<Paciente> listaPacientes, List<Consulta> listaConsultas)
 {
     Console.WriteLine("=== CONSULTAS E RELATÓRIOS ===");
-    Console.WriteLine("1 - Listar todos os pacientes\n2 - Filtrar consultas por status\nEscolha uma opção: ");
+    Console.WriteLine("1 - Listar todos os pacientes\n2 - Filtrar consultas por status\n3 - Relatório\nEscolha uma opção: ");
     string? opcao = Console.ReadLine();
 
     switch (opcao)
@@ -273,6 +277,55 @@ static void ProcessarBusca(List<Paciente> listaPacientes, List<Consulta> listaCo
                 Console.WriteLine($"Paciente: {c.Paciente.Nome} | Horário: {c.DataHora:HH:mm} | Valor: {c.ValorFinal:C}");
             }
             break;
+        
+        case "3":
+
+            if (listaConsultas.Count == 0)
+            {
+                Console.WriteLine("Nenhuma consulta cadastrada");
+                return;
+            }
+
+            var concluidas = listaConsultas
+                .Where(c => c.Status == StatusConsulta.Concluida)
+                .ToList();
+
+            var canceladas = listaConsultas
+                .Where(c => c.Status == StatusConsulta.Cancelada)
+                .ToList();
+
+            Console.WriteLine("=== RELATÓRIO ===");
+
+            if (concluidas.Count > 0)
+            {
+                decimal soma = concluidas.Sum(c => c.ValorFinal);
+                decimal media = concluidas.Average(c => c.ValorFinal);
+                decimal max = concluidas.Max(c => c.ValorFinal);
+           
+                Console.WriteLine("\nDetalhes sobre Consultas Concluídas\n");
+                Console.WriteLine($"Valor total das consultas concluídas: {soma:C}");
+                Console.WriteLine($"Média do valor das consultas concluídas: {media:C}");
+                Console.WriteLine($"Valor máximo de consulta: {max:C}");
+            }
+            else
+            {
+                Console.WriteLine("\nDetalhes sobre Consultas Concluídas\n");
+                Console.WriteLine("Nennhuma consulta concluída registrada");
+            }
+
+            if (canceladas.Count > 0)
+            {
+                int Qcanceladas = canceladas.Count;
+                Console.WriteLine("Detalhes sobre Consultas Canceladas\n");
+                Console.WriteLine($"Quantidade de consultdas canceladas: {Qcanceladas}");
+            }
+            else
+            {
+                Console.WriteLine("Detalhes sobre Consultas Canceladas\n");
+                Console.WriteLine("Nenhuma consulta cancelada registrada");
+            }
+
+            break;
 
         default:
             Console.WriteLine("Entrada inválida");
@@ -296,6 +349,4 @@ static StatusConsulta LerStatusConsulta()
         _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
     };
-
-
 }

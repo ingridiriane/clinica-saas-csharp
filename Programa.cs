@@ -1,7 +1,9 @@
 using ClinicaSaaS;
 
 List<Consulta> listaConsultas = [];
-List<Paciente> listaPacientes = [];
+
+string pathPaciente = "pacientes.csv";
+List<Paciente> listaPacientes = CarregarPacientes(pathPaciente);
 
 bool executando = true;
 
@@ -17,7 +19,7 @@ while (executando)
             break;
 
         case "2":
-            ProcessarNovoPaciente(listaPacientes);
+            ProcessarNovoPaciente(listaPacientes, pathPaciente);
             Limpeza();
             break;
 
@@ -68,7 +70,7 @@ static void Limpeza()
     Console.Clear();
 }
 
-static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
+static void ProcessarNovoPaciente(List<Paciente> listaPacientes, string pathPaciente)
 {
     //PACIENTE
     Console.WriteLine("Digite o nome do paciente: ");
@@ -110,6 +112,8 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes)
             {
                 paciente = new Paciente(nome, dataNascimento, convenio, telefone);
                 listaPacientes.Add(paciente);
+
+                SalvarPacientes(listaPacientes, pathPaciente);
 
                 Console.Clear();
 
@@ -345,4 +349,52 @@ static StatusConsulta LerStatusConsulta()
         _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
     };
+}
+
+static void SalvarPacientes (List<Paciente> listaPacientes, string pathPaciente)
+{
+    using (StreamWriter escritor = new StreamWriter(pathPaciente))
+    {
+        foreach (Paciente p in listaPacientes)
+        {
+            string linha = $"{p.Nome};{p.DataNascimento:yyyy-MM-dd};{p.Convenio};{p.Telefone}";
+            escritor.WriteLine(linha);
+        }
+    }
+}
+
+static List<Paciente> CarregarPacientes(string pathPaciente)
+{
+    List<Paciente> pacientes = [];
+
+    if (!File.Exists(pathPaciente))
+    {
+        return pacientes;
+    }
+
+    using (StreamReader leitor = new(pathPaciente))
+    {
+        string? linha;
+
+        while ((linha = leitor.ReadLine()) != null)
+        {
+            if(string.IsNullOrWhiteSpace(linha)) continue;
+
+            string[] campos = linha.Split(';');
+
+            if(campos.Length >= 4)
+            {
+                string nome = campos[0];
+                DateTime.TryParse(campos[1], out DateTime dataNascimento);
+                string convenio = campos[2];
+                string telefone = campos[3];
+
+                Paciente p = new Paciente(nome, dataNascimento, convenio, telefone);
+                pacientes.Add(p);
+            }
+
+        }    
+    } 
+
+    return pacientes;  
 }

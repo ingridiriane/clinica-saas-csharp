@@ -1,11 +1,10 @@
-using System.Reflection.Metadata;
 using ClinicaSaaS;
 
-string pathPaciente = "pacientes.csv";
-List<Paciente> listaPacientes = CarregarPacientes(pathPaciente);
+RepositorioPaciente repoPaciente = new("pacientes.csv");
+RepositorioConsulta repoConsulta = new("consultas.csv");
 
-string pathConsulta = "consultas.csv";
-List<Consulta> listaConsultas = CarregarConsultas(pathConsulta, listaPacientes);
+List<Paciente> listaPacientes = repoPaciente.CarregarPacientes();
+List<Consulta> listaConsultas = repoConsulta.CarregarConsultas(listaPacientes);
 
 bool executando = true;
 
@@ -16,12 +15,12 @@ while (executando)
     switch (opcaoMenu)
     {
         case "1":
-            ProcessarNovaConsulta(listaConsultas, listaPacientes, pathConsulta);
+            ProcessarNovaConsulta(listaConsultas, listaPacientes, repoConsulta);
             Limpeza();
             break;
 
         case "2":
-            ProcessarNovoPaciente(listaPacientes, pathPaciente);
+            ProcessarNovoPaciente(listaPacientes, repoPaciente);
             Limpeza();
             break;
 
@@ -72,7 +71,7 @@ static void Limpeza()
     Console.Clear();
 }
 
-static void ProcessarNovoPaciente(List<Paciente> listaPacientes, string pathPaciente)
+static void ProcessarNovoPaciente(List<Paciente> listaPacientes, RepositorioPaciente repoPaciente)
 {
     //PACIENTE
     Console.WriteLine("Digite o nome do paciente: ");
@@ -115,7 +114,7 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes, string pathPaci
                 paciente = new Paciente(nome, dataNascimento, convenio, telefone);
                 listaPacientes.Add(paciente);
 
-                SalvarPacientes(listaPacientes, pathPaciente);
+                repoPaciente.SalvarPacientes(listaPacientes);
 
                 Console.Clear();
 
@@ -137,13 +136,10 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes, string pathPaci
             Console.Clear();
             Console.WriteLine("Entrada inválida");
             break;
-
     }
-
-
 }
 
-static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes, string pathConsulta)
+static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes, RepositorioConsulta repoConsulta)
 {
     //CONSULTA
 
@@ -202,7 +198,7 @@ static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> 
 
         listaConsultas.Add(consulta);
 
-        SalvarConsultas(listaConsultas, pathConsulta);
+        repoConsulta.SalvarConsultas(listaConsultas);
 
         //EXIBIR RESULTADO DOS INPUTS
         Console.WriteLine("=== NOVO ATENDIMENTO ===");
@@ -353,116 +349,4 @@ static StatusConsulta LerStatusConsulta()
         _ => StatusConsulta.Agendada //em caso de entrada inválida, assume status padrão
 
     };
-}
-
-static void SalvarPacientes (List<Paciente> listaPacientes, string pathPaciente)
-{
-    using (StreamWriter escritor = new StreamWriter(pathPaciente))
-    {
-        foreach (Paciente p in listaPacientes)
-        {
-            string linha = $"{p.Nome};{p.DataNascimento:yyyy-MM-dd};{p.Convenio};{p.Telefone}";
-            escritor.WriteLine(linha);
-        }
-    }
-}
-
-static List<Paciente> CarregarPacientes(string pathPaciente)
-{
-    List<Paciente> pacientes = [];
-
-    if (!File.Exists(pathPaciente))
-    {
-        return pacientes;
-    }
-
-    using (StreamReader leitor = new(pathPaciente))
-    {
-        string? linha;
-
-        while ((linha = leitor.ReadLine()) != null)
-        {
-            if(string.IsNullOrWhiteSpace(linha)) continue;
-
-            string[] campos = linha.Split(';');
-
-            if(campos.Length >= 4)
-            {
-                string nome = campos[0];
-                DateTime.TryParse(campos[1], out DateTime dataNascimento);
-                string convenio = campos[2];
-                string telefone = campos[3];
-
-                Paciente p = new Paciente(nome, dataNascimento, convenio, telefone);
-                pacientes.Add(p);
-            }
-
-        }    
-    } 
-
-    return pacientes;  
-}
-
-static void SalvarConsultas (List<Consulta> listaConsultas, string pathConsulta)
-{
-    using StreamWriter escritor = new(pathConsulta);
-    {
-        foreach (Consulta c in listaConsultas)
-        {
-            string linha = $"{c.Paciente.Nome};{c.DataHora:yyyy-MM-dd};{c.Duracao};{c.Valor};{c.Status}";
-            escritor.WriteLine(linha);
-        }
-    }
-}
-
-static List<Consulta> CarregarConsultas(string pathConsulta, List<Paciente> listaPacientes)
-{
-    List<Consulta> consultas = [];
-
-    if (!File.Exists(pathConsulta))
-    {
-        return consultas;
-    }
-
-    using StreamReader leitor = new(pathConsulta);
-    {
-        string? linha;
-        while ((linha = leitor.ReadLine()) != null)
-        {
-            if (string.IsNullOrWhiteSpace(linha)) continue;
-
-            string[] campos = linha.Split(';');
-
-            if (campos.Length >= 5)
-            {
-                string nomePaciente = campos[0];
-
-                Paciente? pacienteEncontrado = listaPacientes
-                    .FirstOrDefault(p => p.Nome.Equals(nomePaciente, StringComparison.OrdinalIgnoreCase));
-
-                if (pacienteEncontrado is null)
-                {
-                    continue;
-                }
-
-                DateTime.TryParse(campos[1], out DateTime dataHora);
-                int.TryParse(campos[2], out int duracao);
-                decimal.TryParse(campos[3], out decimal valor);
-                Enum.TryParse(campos[4], out StatusConsulta status);
-
-                Consulta c = new(pacienteEncontrado)
-                {
-                    DataHora = dataHora,
-                    Duracao = duracao,
-                    Valor = valor,
-                    Status = status
-                };
-
-                consultas.Add(c);
-            }
-        }
-
-    }
-
-    return consultas;
 }

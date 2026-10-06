@@ -1,9 +1,11 @@
+using System.Reflection.Metadata;
 using ClinicaSaaS;
-
-List<Consulta> listaConsultas = [];
 
 string pathPaciente = "pacientes.csv";
 List<Paciente> listaPacientes = CarregarPacientes(pathPaciente);
+
+string pathConsulta = "consultas.csv";
+List<Consulta> listaConsultas = CarregarConsultas(pathConsulta, listaPacientes);
 
 bool executando = true;
 
@@ -14,7 +16,7 @@ while (executando)
     switch (opcaoMenu)
     {
         case "1":
-            ProcessarNovaConsulta(listaConsultas, listaPacientes);
+            ProcessarNovaConsulta(listaConsultas, listaPacientes, pathConsulta);
             Limpeza();
             break;
 
@@ -141,7 +143,7 @@ static void ProcessarNovoPaciente(List<Paciente> listaPacientes, string pathPaci
 
 }
 
-static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes)
+static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> listaPacientes, string pathConsulta)
 {
     //CONSULTA
 
@@ -199,6 +201,8 @@ static void ProcessarNovaConsulta(List<Consulta> listaConsultas, List<Paciente> 
         };
 
         listaConsultas.Add(consulta);
+
+        SalvarConsultas(listaConsultas, pathConsulta);
 
         //EXIBIR RESULTADO DOS INPUTS
         Console.WriteLine("=== NOVO ATENDIMENTO ===");
@@ -302,14 +306,14 @@ static void ProcessarBusca(List<Paciente> listaPacientes, List<Consulta> listaCo
                 decimal media = concluidas.Average(c => c.ValorFinal);
                 decimal max = concluidas.Max(c => c.ValorFinal);
            
-                Console.WriteLine("Detalhes sobre Consultas Concluídas\n");
+                Console.WriteLine("\nDetalhes sobre Consultas Concluídas\n");
                 Console.WriteLine($"Valor total das consultas concluídas: {soma:C}");
                 Console.WriteLine($"Média do valor das consultas concluídas: {media:C}");
                 Console.WriteLine($"Valor máximo de consulta: {max:C}");
             }
             else
             {
-                Console.WriteLine("Detalhes sobre Consultas Concluídas\n");
+                Console.WriteLine("\nDetalhes sobre Consultas Concluídas\n");
                 Console.WriteLine("Nennhuma consulta concluída registrada");
             }
 
@@ -397,4 +401,68 @@ static List<Paciente> CarregarPacientes(string pathPaciente)
     } 
 
     return pacientes;  
+}
+
+static void SalvarConsultas (List<Consulta> listaConsultas, string pathConsulta)
+{
+    using StreamWriter escritor = new(pathConsulta);
+    {
+        foreach (Consulta c in listaConsultas)
+        {
+            string linha = $"{c.Paciente.Nome};{c.DataHora:yyyy-MM-dd};{c.Duracao};{c.Valor};{c.Status}";
+            escritor.WriteLine(linha);
+        }
+    }
+}
+
+static List<Consulta> CarregarConsultas(string pathConsulta, List<Paciente> listaPacientes)
+{
+    List<Consulta> consultas = [];
+
+    if (!File.Exists(pathConsulta))
+    {
+        return consultas;
+    }
+
+    using StreamReader leitor = new(pathConsulta);
+    {
+        string? linha;
+        while ((linha = leitor.ReadLine()) != null)
+        {
+            if (string.IsNullOrWhiteSpace(linha)) continue;
+
+            string[] campos = linha.Split(';');
+
+            if (campos.Length >= 5)
+            {
+                string nomePaciente = campos[0];
+
+                Paciente? pacienteEncontrado = listaPacientes
+                    .FirstOrDefault(p => p.Nome.Equals(nomePaciente, StringComparison.OrdinalIgnoreCase));
+
+                if (pacienteEncontrado is null)
+                {
+                    continue;
+                }
+
+                DateTime.TryParse(campos[1], out DateTime dataHora);
+                int.TryParse(campos[2], out int duracao);
+                decimal.TryParse(campos[3], out decimal valor);
+                Enum.TryParse(campos[4], out StatusConsulta status);
+
+                Consulta c = new(pacienteEncontrado)
+                {
+                    DataHora = dataHora,
+                    Duracao = duracao,
+                    Valor = valor,
+                    Status = status
+                };
+
+                consultas.Add(c);
+            }
+        }
+
+    }
+
+    return consultas;
 }

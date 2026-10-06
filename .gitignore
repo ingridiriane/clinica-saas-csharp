@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+#Ignorar arquivos dos dados locais gerados
+*.csv

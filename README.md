@@ -41,7 +41,7 @@ O arquivo `Program.cs` atua estritamente no controle do fluxo da CLI e na exibi�
   Criação de entidades (`Paciente`, `Consulta`), encapsulamento de estado, regras de negócio financeiras/etárias, construtores defensivos com `try/catch` e uso do Enum `StatusConsulta`[cite: 8, 9].
 - [x] **Módulo 5: Coleções em Memória, LINQ & Persistência**  
   Manipulação de listas dinâmicas (`List<T>`), relatórios dinâmicos com LINQ (`Sum`, `Average`, `Max`, `Count`), persistência em arquivos CSV e isolamento arquitetural com o Padrão Repository[cite: 7, 8, 9].
-- [ ] **Módulo 6: Arquitetura de Solução Multi-Projetos em .NET**  
+- [x] **Módulo 6: Arquitetura de Solução Multi-Projetos em .NET**  
   CLI do .NET (`dotnet new sln`), estruturação em Monorepo (`/src/backend`, `/src/frontend`) e divisão em camadas (Domínio, Infraestrutura, Apresentação)[cite: 8, 9].
 - [ ] **Módulo 7: Banco de Dados Relacional & EF Core**  
   Modelagem SQL, ORM com Entity Framework Core e controle de schema via Migrations[cite: 8, 9].

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ClinicaSaaS.Console/ClinicaSaaS.Console.csproj" />
+  <Project Path="ClinicaSaaS.Domain/ClinicaSaaS.Domain.csproj" />
+  <Project Path="ClinicaSaaS.Infrastructure/ClinicaSaaS.Infrastructure.csproj" />
+</Solution>

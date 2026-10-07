@@ -1,4 +1,6 @@
-namespace ClinicaSaaS;
+namespace ClinicaSaaS.Infrastructure;
+
+using ClinicaSaaS.Domain;
 
 public class RepositorioConsulta
 {

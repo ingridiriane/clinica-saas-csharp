@@ -1,4 +1,4 @@
-namespace ClinicaSaaS;
+namespace ClinicaSaaS.Domain;
 
 public class Consulta(Paciente paciente)
 {
